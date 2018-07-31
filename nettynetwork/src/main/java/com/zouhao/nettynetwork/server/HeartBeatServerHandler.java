@@ -1,39 +1,39 @@
 package com.zouhao.nettynetwork.server;
 
+import com.zouhao.nettynetwork.msg.CustomHeartbeatHandler;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 
-public class HeartBeatServerHandler extends ChannelHandlerAdapter {
+/**
+ * 心跳检测服务器Handler
+ */
+public class HeartBeatServerHandler extends CustomHeartbeatHandler {
 
-    private int lossConnectCount = 0;
-
-    @Override
-    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-
-        if(evt instanceof IdleStateEvent){
-            IdleStateEvent event = (IdleStateEvent)evt;
-            if(event.state() == IdleState.READER_IDLE){
-                lossConnectCount++;
-                if(lossConnectCount > 2){
-                    System.out.println("关闭这个不活跃的通道");
-                    ctx.channel().close();
-                }
-            }
-        }else{
-            super.userEventTriggered(ctx, evt);
-        }
+    public HeartBeatServerHandler() {
+        super("server");
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        lossConnectCount = 0;
-        System.out.println("client says: " + msg.toString());
+    protected void handleData(ChannelHandlerContext channelHandlerContext, ByteBuf buf) {
+        byte[] data = new byte[buf.readableBytes() - 5];
+        ByteBuf responseBuf = Unpooled.copiedBuffer(buf);
+        buf.skipBytes(5);
+        buf.readBytes(data);
+        String content = new String(data);
+        System.out.println(name + " get content: " + content);
+        channelHandlerContext.write(responseBuf);
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    protected void handleReaderIdle(ChannelHandlerContext ctx) {
+        super.handleReaderIdle(ctx);
+        System.err.println("---client " + ctx.channel().remoteAddress().toString() + " reader timeout, close it---");
         ctx.close();
     }
+
+
+
 }

@@ -1,7 +1,8 @@
 package com.zouhao.nettyserver;
 
-import com.zouhao.nettynetwork.server.EchoServer;
-import io.netty.channel.Channel;
+import com.zouhao.nettynetwork.client.HeartBeatClient;
+import com.zouhao.nettynetwork.server.HeartBeatServer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -9,24 +10,19 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class NettyserverApplication {
 
     public static void main(String[] args) {
+
+        SpringApplication.run(NettyserverApplication.class);
+
+        //启动nettyclien
+        HeartBeatServer server = new HeartBeatServer();
         try {
-            SpringApplication.run(NettyserverApplication.class);
-
-            // 启动netty server
-            Channel channel = EchoServer.start();
-
-            run(channel);
-
-        } catch (Exception e) {
+            server.start(12345);
+        }catch (Exception e){
             e.printStackTrace();
         }
     }
 
-    public static void run(Channel channel) throws Exception {
-        // do nothing
-        channel.closeFuture().sync();
-        System.out.println("server run");
-    }
+
 
 
 }
